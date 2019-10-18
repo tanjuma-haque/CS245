@@ -1,0 +1,35 @@
+Exit code: ExitSuccess
+Stdout:
+Welcome to the Java interpreter. Nice to meet you!
+Type `:?` at the prompt for the list of commands.
+Java> false
+Java> true
+Java> true
+Java> false
+Java> true
+Java> String is not convertible to a numeric type.
+Java> String is not convertible to a numeric type.
+Java> boolean is not convertible to a numeric type.
+Java> true
+Java> true
+Java> false
+Java> true
+Java> Illegal operand type(s) for equality: Boolean and Int
+Java> false
+Java> true
+Java> false
+Java> true
+Java> Illegal operand type(s) for equality: <nulltype> and Boolean
+Java> Java> true
+Java> true
+Java> true
+Java> true
+Java> ArithmeticException: / by zero
+Java> true
+Java> true
+Java> false
+Java> true
+Java> Illegal operand type(s) for conditional operation: PrimType Int and PrimType Boolean
+Java> Good-bye.
+
+Stderr:
