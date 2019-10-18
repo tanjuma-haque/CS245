@@ -1,0 +1,31 @@
+lexPreL "iftruethen3else4"  -- [VarT "iftruethen",LiteralT (IntegerV 3),ElseT,LiteralT (IntegerV 4)]
+lexPreL "\\ x. x"  -- [LambdaT, VarT "x", DotT, VarT "x"]
+lexPreL "+ 1 5"    -- [OpT Plus, LiteralT (IntegerV 1), LiteralT (IntegerV 5)]
+lexPreL "if true then false else true"  -- [IfT, LiteralT (BoolV True), ThenT, LiteralT (BoolV False), ElseT, LiteralT (BoolV True)]
+lexPreL "+ (- )) 3 ))4 (5)"  -- [OpT Plus, OpT Minus, LiteralT (IntegerV 3), LiteralT (IntegerV 4), LiteralT (IntegerV 5)]
+lexPreL "\\x. + 5 y" -- [LambdaT, VarT "x", DotT, OpT Plus, LiteralT (IntegerV 5), VarT "y"]
+
+parse [LiteralT (IntegerV 5), LiteralT (BoolV False)]   -- (ValueE (IntegerV 5), [LiteralT (BoolV False)])
+parse [OpT Plus, LiteralT (IntegerV 5), LiteralT (IntegerV 6)]  -- (OpE Plus (ValueE (IntegerV 5)) (ValueE (IntegerV 6)), [])
+parse [IfT, LiteralT (BoolV True), ThenT, LiteralT (BoolV False), ElseT, LiteralT (BoolV True)]  -- (IfE (ValueE (BoolV True)) (ValueE (BoolV False)) (ValueE (BoolV True)), [])
+parse [AppT, VarT "x", VarT "y"] -- (AppE (VarE "x") (VarE "y"), [])
+parse [OpT Plus]  -- error
+
+eval (OpE Plus (ValueE (IntegerV 5)) (ValueE (IntegerV 6)))   -- IntegerV 11
+eval (IfE (ValueE (BoolV False)) (ValueE (IntegerV 5)) (ValueE (IntegerV 10)))   -- IntegerV 10
+eval (AppE (ValueE (LambdaV "x" (VarE "x"))) (ValueE (BoolV False)))  -- BoolV False
+eval (OpE Plus (ValueE (BoolV False)) (ValueE (BoolV True)))  -- error (cannot add booleans)
+eval (NotE (ValueE (IntegerV 5))) -- error (cannot logically negate an integer
+eval (AppE (ValueE (LambdaV "x" (OpE Plus (VarE "x") (VarE "x")))) (ValueE (IntegerV 5))) --IntegerV 10
+
+lexParse "if true then 3 else 4"   -- IfE (ValueE (BoolV True)) (ValueE (IntegerV 3)) (ValueE (IntegerV 4))
+lexParse  "if < - 5 4 2 then - 3 2 else + 9 10"  -- IfE (OpE LessThan (OpE Minus (ValueE (IntegerV 5)) (ValueE (IntegerV 4))) (ValueE (IntegerV 2))) (OpE Minus (ValueE (IntegerV 3)) (ValueE (IntegerV 2))) (OpE Plus (ValueE (IntegerV 9)) (ValueE (IntegerV 10)))
+
+evalString "+ - 5 4 3" -- IntegerV 4
+evalString "if true then 3 else 4" -- IntegerV 3
+evalString "if false then 3 else 4" -- IntegerV 4
+evalString "if < - 5 4 2 then - 3 2 else + 9 10" -- IntegerV 1
+evalString "@ \\x.x 3"  -- IntegerV 3
+evalString "@ @ \\x.\\y.@ x y \\z.+ z 1 4"  -- IntegerV 5
+evalString "@ \\m. @ @ @ \\f. @ \\x. @ f @ x x \\x. @ f @ x x \\hdlt. \\n. \\d. if = d 1 then true else if = * / n d d n then false else @ @ hdlt n - d 1 m - m 1 17"  -- BoolV True
+evalString "@ \\m. @ @ @ \\f. @ \\x. @ f @ x x \\x. @ f @ x x \\hdlt. \\n. \\d. if = d 1 then true else if = * / n d d n then false else @ @ hdlt n - d 1 m - m 1 21"  -- BoolV False
