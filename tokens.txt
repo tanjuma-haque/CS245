@@ -1,0 +1,26 @@
+9. JavaLetter
+10. JavaLetter
+11. JavaLetter
+12. Operator -> the - is the first character that is not part of the first token 
+13. StringLiteral
+14. StringLiteral
+15. StringLiteral
+16. Keyword
+17. Operator -> = is the first character that is not part of the first token 
+18. Operator -> = is the first character that is not part of the first token 
+19. DecimalNumeral
+20. DecimalIntegerLiteral
+21. 72 is DecimalNumeral and K is JavaLetter (which is also the first character not part of the DecimalNumeral)
+22. 59 is DecimalNumeral and _ is the first character, DigitsAndUnderscores, that not part of the first token
+23. DigitsAndUnderscores
+24. _34 is IdentifierChars and  _ is JavaLetter
+25. HexNumeral
+26. HexNumeral
+27. 0 is DecimalNumeral and x is JavaLetter
+28. 0 is DecimalNumeral and x_ is JavaLetter
+29. 0  is DecimalNumeral , x_ is JavaLetter and  3  is DecimalNumeral
+30. 0  is DecimalNumeral and _3 is JavaLetterOrDigit
+31. 01234567 is OctalNumeral and89 is DecimalNumeral
+32. 0  is DecimalNumeral and H12 is JavaLetterOrDigit
+33. 0 is DecimalNumeral and L45 is JavaLetterOrDigit
+

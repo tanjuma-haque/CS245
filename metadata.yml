@@ -1,14 +1,12 @@
 ---
-:id: 11070199
+:id: 9692503
 :submitters:
 - :name: Umme Tanjuma Haque
   :email: uhaque@brynmawr.edu
-- :name: Guo, Vinty
-  :email: vguo@brynmawr.edu
 :created_at: !ruby/object:ActiveSupport::TimeWithZone
-  utc: 2018-11-07 04:57:16.352085000 Z
+  utc: 2018-10-04 03:52:37.774470000 Z
   zone: !ruby/object:ActiveSupport::TimeZone
     name: America/Los_Angeles
-  time: 2018-11-06 20:57:16.352085000 Z
+  time: 2018-10-03 20:52:37.774470000 Z
 :status: processed
-:score: 98.0
+:score: 116.0

@@ -1,58 +1,85 @@
-GHCi, version 8.4.3: http://www.haskell.org/ghc/  :? for help
-[1 of 6] Compiling Syntax           ( Syntax.hs, interpreted )
-[2 of 6] Compiling Eval             ( Eval.hs, interpreted )
-[3 of 6] Compiling Token            ( Token.hs, interpreted )
-[4 of 6] Compiling Parser           ( Parser.hs, interpreted )
-[5 of 6] Compiling Lexer            ( Lexer.hs, interpreted )
-[6 of 6] Compiling Main             ( PreL.hs, interpreted )
-Ok, six modules loaded.
-*Main> [VarT "iftruethen",LiteralT (IntegerV 3),ElseT,LiteralT (IntegerV 4)]
-*Main> [LambdaT,VarT "x",DotT,VarT "x"]
-*Main> [OpT Plus,LiteralT (IntegerV 1),LiteralT (IntegerV 5)]
-*Main> [IfT,LiteralT (BoolV True),ThenT,LiteralT (BoolV False),ElseT,LiteralT (BoolV True)]
-*Main> [OpT Plus,OpT Minus,LiteralT (IntegerV 3),LiteralT (IntegerV 4),LiteralT (IntegerV 5)]
-*Main> [LambdaT,VarT "x",DotT,OpT Plus,LiteralT (IntegerV 5),VarT "y"]
-*Main> *Main> (ValueE (IntegerV 5),[LiteralT (BoolV False)])
-*Main> (OpE Plus (ValueE (IntegerV 5)) (ValueE (IntegerV 6)),[])
-*Main> (IfE (ValueE (BoolV True)) (ValueE (BoolV False)) (ValueE (BoolV True)),[])
-*Main> (AppE (VarE "x") (VarE "y"),[])
-*Main> *** Exception: error
-CallStack (from HasCallStack):
-  error, called at ./Parser.hs:84:11 in main:Parser
-*Main> *Main> IntegerV 11
-*Main> IntegerV 10
-*Main> *** Exception: Eval.hs:(14,1)-(36,28): Non-exhaustive patterns in function eval
-
-*Main> *** Exception: error
-CallStack (from HasCallStack):
-  error, called at ./Eval.hs:36:16 in main:Eval
-*Main> *** Exception: error
-CallStack (from HasCallStack):
-  error, called at ./Eval.hs:21:16 in main:Eval
-*Main> *** Exception: Eval.hs:(14,1)-(36,28): Non-exhaustive patterns in function eval
-
-*Main> *Main> IfE (ValueE (BoolV True)) (ValueE (IntegerV 3)) (ValueE (IntegerV 4))
-*Main> IfE (OpE LessThan *** Exception: error
-CallStack (from HasCallStack):
-  error, called at ./Parser.hs:84:11 in main:Parser
-*Main> *Main> *** Exception: Unexpected error
-CallStack (from HasCallStack):
-  error, called at PreL.hs:58:46 in main:Main
-*Main> IntegerV 3
-*Main> IntegerV 4
-*Main> *** Exception: error
-CallStack (from HasCallStack):
-  error, called at ./Parser.hs:84:11 in main:Parser
-*Main> *** Exception: Unexpected error
-CallStack (from HasCallStack):
-  error, called at PreL.hs:58:46 in main:Main
-*Main> *** Exception: Unexpected error
-CallStack (from HasCallStack):
-  error, called at PreL.hs:58:46 in main:Main
-*Main> *** Exception: Unexpected error
-CallStack (from HasCallStack):
-  error, called at PreL.hs:58:46 in main:Main
-*Main> *** Exception: Unexpected error
-CallStack (from HasCallStack):
-  error, called at PreL.hs:58:46 in main:Main
+GHCi, version 8.2.1: http://www.haskell.org/ghc/  :? for help
+[1 of 1] Compiling Main             ( Lexer.hs, interpreted )
+Ok, 1 module loaded.
+*Main> ["hi","there"]
+*Main> ["hi","there"]
+*Main> ["hi","there"]
+*Main> ["hi","there"]
+*Main> ["hi","there"]
+*Main> ["hi","there"]
+*Main> ["abstract","continue","for","new","switch","assert","default","if","package","synchronized","boolean","do","goto","private","this","break","double","implements","protected","throw","byte","else","import","public","throws","case","enum","instanceof","return","transient","catch","extends","int","short","try","char","final","interface","static","void","class","finally","long","strictfp","volatile","const","float","native","super","while"]
+*Main> ["(",")","{","}","[","]",";",",",".",".",".","@",":"]
+*Main> ["=",">","<","!","~","?",":","-","==",">=","<=","!","&","||","++","-","+","-","*","/","&","|","^","%","<<",">>",">>>","+=","-","*","/","&","|=","^=","%","<<=",">>=",">>>="]
+*Main> ["i","+","j"]
+*Main> ["i","*","j"]
+*Main> ["i","/","*","j"]
+*Main> ["a","long","comment"]
+*Main> ["some","(","arens",")"]
+*Main> ["i","++",";"]
+*Main> ["i","+++","-",";"]
+*Main> []
+*Main> ["00","l","07770","L","0x100000000","L","2_147_483_648","L","0xC0B0L"]
+*Main> ["00","2","03720","0xDada_Cafe","1996","0x00_FF__00_FF"]
+*Main> ["12"]
+*Main> ["1234567"]
+*Main> ["0"]
+*Main> ["3"]
+*Main> ["1_2"]
+*Main> ["1__2"]
+*Main> ["12_"]
+*Main> ["_","2_"]
+*Main> ["12____"]
+*Main> ["1_"]
+*Main> ["123L"]
+*Main> ["1_2L"]
+*Main> ["123_45L"]
+*Main> ["123l"]
+*Main> ["123_L"]
+*Main> ["0x123"]
+*Main> ["0x12bc"]
+*Main> ["0x0"]
+*Main> ["0XAbC"]
+*Main> ["0x34_56"]
+*Main> ["0x34_abc"]
+*Main> ["0xdef","gh"]
+*Main> ["0xdefL"]
+*Main> ["0xdef","LL"]
+*Main> ["0x"]
+*Main> ["0x","_"]
+*Main> ["0x","_","fe"]
+*Main> ["0x","L"]
+*Main> ["0xd__e"]
+*Main> ["01"]
+*Main> ["000"]
+*Main> ["012_34"]
+*Main> ["0123456789"]
+*Main> ["0_12"]
+*Main> ["0_0"]
+*Main> ["00","L"]
+*Main> ["0_0","L"]
+*Main> ["0b111"]
+*Main> ["0b1001"]
+*Main> ["0b0"]
+*Main> ["0B010"]
+*Main> ["0b11_00"]
+*Main> ["0b1","23"]
+*Main> ["0b1L"]
+*Main> ["char","x","=","'","'"]
+*Main> ["'","'"]
+*Main> ["'","'"]
+*Main> ["'","n","'"]
+*Main> ["'","\\"]
+*Main> ["'","lah","'"]
+*Main> ["'","123","'"]
+*Main> ["'","'"]
+*Main> ["'","48","'"]
+*Main> ["'","'"]
+*Main> ["\"","i","\""]
+*Main> ["\"","his","is","a","string","\""]
+*Main> ["\"","ot","a","comment","\""]
+*Main> ["\"","o","comment"]
+*Main> ["\"","his","is","a","quote",":","\\","\""]
+*Main> ["\"","ops","\\"]
+*Main> ["\"","ops"]
+*Main> ["\"","'"]
 *Main> Leaving GHCi.

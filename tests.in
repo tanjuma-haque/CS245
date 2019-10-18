@@ -1,31 +1,81 @@
-lexPreL "iftruethen3else4"  -- [VarT "iftruethen",LiteralT (IntegerV 3),ElseT,LiteralT (IntegerV 4)]
-lexPreL "\\ x. x"  -- [LambdaT, VarT "x", DotT, VarT "x"]
-lexPreL "+ 1 5"    -- [OpT Plus, LiteralT (IntegerV 1), LiteralT (IntegerV 5)]
-lexPreL "if true then false else true"  -- [IfT, LiteralT (BoolV True), ThenT, LiteralT (BoolV False), ElseT, LiteralT (BoolV True)]
-lexPreL "+ (- )) 3 ))4 (5)"  -- [OpT Plus, OpT Minus, LiteralT (IntegerV 3), LiteralT (IntegerV 4), LiteralT (IntegerV 5)]
-lexPreL "\\x. + 5 y" -- [LambdaT, VarT "x", DotT, OpT Plus, LiteralT (IntegerV 5), VarT "y"]
-
-parse [LiteralT (IntegerV 5), LiteralT (BoolV False)]   -- (ValueE (IntegerV 5), [LiteralT (BoolV False)])
-parse [OpT Plus, LiteralT (IntegerV 5), LiteralT (IntegerV 6)]  -- (OpE Plus (ValueE (IntegerV 5)) (ValueE (IntegerV 6)), [])
-parse [IfT, LiteralT (BoolV True), ThenT, LiteralT (BoolV False), ElseT, LiteralT (BoolV True)]  -- (IfE (ValueE (BoolV True)) (ValueE (BoolV False)) (ValueE (BoolV True)), [])
-parse [AppT, VarT "x", VarT "y"] -- (AppE (VarE "x") (VarE "y"), [])
-parse [OpT Plus]  -- error
-
-eval (OpE Plus (ValueE (IntegerV 5)) (ValueE (IntegerV 6)))   -- IntegerV 11
-eval (IfE (ValueE (BoolV False)) (ValueE (IntegerV 5)) (ValueE (IntegerV 10)))   -- IntegerV 10
-eval (AppE (ValueE (LambdaV "x" (VarE "x"))) (ValueE (BoolV False)))  -- BoolV False
-eval (OpE Plus (ValueE (BoolV False)) (ValueE (BoolV True)))  -- error (cannot add booleans)
-eval (NotE (ValueE (IntegerV 5))) -- error (cannot logically negate an integer
-eval (AppE (ValueE (LambdaV "x" (OpE Plus (VarE "x") (VarE "x")))) (ValueE (IntegerV 5))) --IntegerV 10
-
-lexParse "if true then 3 else 4"   -- IfE (ValueE (BoolV True)) (ValueE (IntegerV 3)) (ValueE (IntegerV 4))
-lexParse  "if < - 5 4 2 then - 3 2 else + 9 10"  -- IfE (OpE LessThan (OpE Minus (ValueE (IntegerV 5)) (ValueE (IntegerV 4))) (ValueE (IntegerV 2))) (OpE Minus (ValueE (IntegerV 3)) (ValueE (IntegerV 2))) (OpE Plus (ValueE (IntegerV 9)) (ValueE (IntegerV 10)))
-
-evalString "+ - 5 4 3" -- IntegerV 4
-evalString "if true then 3 else 4" -- IntegerV 3
-evalString "if false then 3 else 4" -- IntegerV 4
-evalString "if < - 5 4 2 then - 3 2 else + 9 10" -- IntegerV 1
-evalString "@ \\x.x 3"  -- IntegerV 3
-evalString "@ @ \\x.\\y.@ x y \\z.+ z 1 4"  -- IntegerV 5
-evalString "@ \\m. @ @ @ \\f. @ \\x. @ f @ x x \\x. @ f @ x x \\hdlt. \\n. \\d. if = d 1 then true else if = * / n d d n then false else @ @ hdlt n - d 1 m - m 1 17"  -- BoolV True
-evalString "@ \\m. @ @ @ \\f. @ \\x. @ f @ x x \\x. @ f @ x x \\hdlt. \\n. \\d. if = d 1 then true else if = * / n d d n then false else @ @ hdlt n - d 1 m - m 1 21"  -- BoolV False
+lexJava "hi there"                  -- ["hi", "there"]
+lexJava "hi /* comment */ there"    -- ["hi", "there"]
+lexJava "hi // comment \n there"    -- ["hi", "there"]
+lexJava "hi/*nospaces*/there"       -- ["hi", "there"]
+lexJava "hi\nthere"                 -- ["hi", "there"]
+lexJava "hi//comment\nthere"        -- ["hi", "there"]
+lexJava "abstract continue for new switch assert default if package synchronized boolean do goto private this break double implements protected throw byte else import public throws case enum instanceof return transient catch extends int short try char final interface static void class finally long strictfp volatile const float native super while" -- ["abstract","continue","for","new","switch","assert","default","if","package","synchronized","boolean","do","goto","private","this","break","double","implements","protected","throw","byte","else","import","public","throws","case","enum","instanceof","return","transient","catch","extends","int","short","try","char","final","interface","static","void","class","finally","long","strictfp","volatile","const","float","native","super","while"]
+lexJava "(   )   {   }   [   ]   ;   ,   .   ...   @   ::" -- ["(",")","{","}","[","]",";",",",".","...","@","::"]
+lexJava "=   >   <   !   ~   ?   :   -> ==  >=  <=  !=  &&  ||  ++  -- +   -   *   /   &   |   ^   %   <<   >>   >>> +=  -=  *=  /=  &=  |=  ^=  %=  <<=  >>=  >>>=" -- ["=",">","<","!","~","?",":","->","==",">=","<=","!=","&&","||","++","--","+","-","*","/","&","|","^","%","<<",">>",">>>","+=","-=","*=","/=","&=","|=","^=","%=","<<=",">>=",">>>="]
+lexJava "i + j"                     -- ["i", "+", "j"]
+lexJava "i * j"                     -- ["i", "*", "j"]
+lexJava "i / * j"                   -- ["i", "/", "*", "j"]
+lexJava "a long /* blah \n blah */ comment"   -- ["a", "long", "comment"]
+lexJava "some(parens)"              -- ["some", "(", "parens", ")"]
+lexJava "i++;"                      -- ["i", "++", ";"]
+lexJava "i+++-j;"                   -- ["i", "++", "+", "-", "j", ";"]
+lexJava "// comment only"           -- []
+lexJava "0l    0777L    0x100000000L    2_147_483_648L    0xC0B0L" -- ["0l","0777L","0x100000000L","2_147_483_648L","0xC0B0L"]
+lexJava "0    2    0372    0xDada_Cafe    1996    0x00_FF__00_FF" -- ["0","2","0372","0xDada_Cafe","1996","0x00_FF__00_FF"]
+lexJava "12"                        -- ["12"]
+lexJava "1234567"                   -- ["1234567"]
+lexJava "0"                         -- ["0"]
+lexJava "3"                         -- ["3"]
+lexJava "1_2"                       -- ["1_2"]
+lexJava "1__2"                      -- ["1__2"]
+lexJava "12_"                       -- ["12", "_"]
+lexJava "_12_"                      -- ["_12_"]  (this is an identifier, not a number)
+lexJava "12____"                    -- ["12", "____"]
+lexJava "1_"                        -- ["1", "_"]
+lexJava "123L"                      -- ["123L"]
+lexJava "1_2L"                      -- ["1_2L"]
+lexJava "123_45L"                   -- ["123_45L"]
+lexJava "123l"                      -- ["123l"]
+lexJava "123_L"                     -- ["123", "_L"]
+lexJava "0x123"                     -- ["0x123"]
+lexJava "0x12bc"                    -- ["0x12bc"]
+lexJava "0x0"                       -- ["0x0"]
+lexJava "0XAbC"                     -- ["0XAbC"]
+lexJava "0x34_56"                   -- ["0x34_56"]
+lexJava "0x34_abc"                  -- ["0x34_abc"]
+lexJava "0xdefgh"                   -- ["0xdef", "gh"]
+lexJava "0xdefL"                    -- ["0xdefL"]
+lexJava "0xdefLL"                   -- ["0xdefL", "L"]
+lexJava "0x"                        -- ["0", "x"]
+lexJava "0x_"                       -- ["0", "x_"]
+lexJava "0x_dfe"                    -- ["0", "x_dfe"]
+lexJava "0xL"                       -- ["0", "xL"]
+lexJava "0xd__e"                    -- ["0xd__e"]
+lexJava "01"                        -- ["01"]
+lexJava "000"                       -- ["000"]
+lexJava "012_34"                    -- ["012_34"]
+lexJava "0123456789"                -- ["01234567", "89"]
+lexJava "0_12"                      -- ["0_12"]
+lexJava "0_0"                       -- ["0_0"]
+lexJava "0L"                        -- ["0L"]   (this is not octal)
+lexJava "0_L"                       -- ["0", "_L"]
+lexJava "0b111"                     -- ["0b111"]
+lexJava "0b1001"                    -- ["0b1001"]
+lexJava "0b0"                       -- ["0b0"]
+lexJava "0B010"                     -- ["0B010"]
+lexJava "0b11_00"                   -- ["0b11_00"]
+lexJava "0b123"                     -- ["0b1", "23"]
+lexJava "0b1L"                      -- ["0b1L"]
+lexJava "char x = 'x';"             -- ["char", "x", "=", "'x'", ";"]
+lexJava "'y'"                       -- ["'y'"]
+lexJava "'''"                       -- error
+lexJava "'\\n'"                     -- ["'\\n'"]
+lexJava "'\\\\'"                    -- ["'\\\\'"]
+lexJava "'blah'"                    -- error
+lexJava "'\\123'"                   -- ["'\\123'"]
+lexJava "'\\''"                     -- ["'\\''"]
+lexJava "'\\48'"                    -- error
+lexJava "'\n'"                      -- error
+lexJava "\"hi\""                    -- ["\"hi\""]
+lexJava "\"this is a string\""      -- ["\"this is a string\""]
+lexJava "\"not a comment /* here */\""   -- ["\"not a comment /* here */\""]
+lexJava "\"no comment // here either\""  -- ["\" no comment // here either\""]
+lexJava "\"this is a quote: \\\"\""      -- ["\"this is a quote: \\\"\""]
+lexJava "\"oops\\\""                     -- error (unterminated string)
+lexJava "\"oops"                         -- error
+lexJava "\"''\""                         -- ["\"''\""]

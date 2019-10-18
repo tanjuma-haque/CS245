@@ -1,127 +1,175 @@
-{- Author: < Vinty(Liwen) Guo and Umme Tanjuma Haque>
-   File: Lexer.hs
-
-  -- Lexes the syntax for the Preλ interpreter
+{- Name: <Tanjuma Haque>
+ File: Lexer.hs
+ Desc: A Java lexer
 -}
-
-module Lexer where
-
+module Main where
 import Data.Char
-import Data.List
-import Text.Read
-import Token
-import Syntax
+import System.Environment
+import System.Exit
+import System.FilePath
+main :: IO ()
+main = do
+ args <- getArgs
+ filename <- checkArgs args
+ input <- readFile filename
+ let result = lexJava input
+ writeFile (takeBaseName filename <.> "lex") (unlines result)
+-- Check the command-line arguments. Returns the filename
+-- to lex upon success.
+checkArgs :: [String] -> IO FilePath
+checkArgs [path] = pure path
+checkArgs _other = do
+ putStrLn "Usage: ./Lexer <filename>.java"
+ putStrLn "Writes to <filename>.lex"
+ exitFailure
+-- Takes Java code as input and returns a list of Strings.
+-- Each String in the output list is one Java token.
+-- Comments and whitespace are discarded.
 
-{-
+-- lexJava uses lexNoPrefix on findToken which is used on the input string to give a list of tokens
+lexJava :: String -> [String]
+lexJava "" = []
+lexJava (x:xs) = lexNoPrefix(findToken (x:xs))
 
-a. if < 2 1 then true else false
-[if,<,2,1,then,else,false]
+-- lex1 takes in a character and string and returns two strings, in which the first one is token type of the char and the 2nd is the remainder
+lex1 :: Char -> String -> (String, String)
+lex1 n "" = ( n:"", "")
+lex1 n (x:xs)
+  | n == '0' = (n : fst (ifFirstZero (x:xs)) , snd (ifFirstZero (x:xs)))
+  | isLetter n = findLongestIdentfr (n:x:xs)
+  | (isDigit n && n /= '0') = findDigit(n:x:xs)
+  | isSymbol(n) = findOpandSep (n:x:xs)
+  | otherwise = (n:"", xs) 
 
-b. hello { there } people
-[hello,people]
+--uses Lex1 to lex the first token (first part of tuple) and recurs lexJava from the second part of the tuple 
+lexNoPrefix :: String -> [String]
+lexNoPrefix "" = []
+lexNoPrefix (x:xs)  = (fst pair4):(lexJava (snd pair4))
+    where pair4 = lex1 x xs
 
-c. (+12h)
-[+,12,h]
+--finds longest identifier in char+string of Lex1 and returns (identifer, rest of str)
+findLongestIdentfr :: String -> (String,String) 
+findLongestIdentfr "" = ( "", "")
+findLongestIdentfr (x:xs) 
+  | (isLetter x || x == '_' || x == '$'|| isDigit x) = (x : fst pair, snd pair)
+  | otherwise = ("", x:xs)
+      where pair = findLongestIdentfr xs
 
-d. iff thenn
-[iff,thenn]
+--tokenizes digits that do not start with 0 and ends with L/l
+findDigit :: String -> (String, String) 
+findDigit "" = ("", "")
+findDigit (x:xs)
+  |(isDigit x || x == '_' )= (x:fst pair3, snd pair3)
+  |((x == 'L'|| x == 'l') && xs == "") = (x:fst pair3, snd pair3)
+  | otherwise = ("", x:xs)
+      where pair3 = findDigit xs
 
-e. tok33<=
-[tok,33,<=]
 
--}
+--if first char is 0, this function deals with hexadecimal, binary, oct etc. // The function fails to add L/l to digits if it is in the middle of the string.
+-- I tried adding another guard that checked for whitespaces instead of empty string but it did not work hence, I removed that part. 
+ifFirstZero :: String -> (String, String)
+ifFirstZero "" = ("", "")
+ifFirstZero (x:xs) 
+ | (x == 'x'|| x =='X') =  (x : fst pair6, snd pair6) 
+ | isDigit x || x == '_' = ( (x : fst pair5), snd pair5)
+ | (x == 'b' || x =='B') = ((x:fst pair7), snd pair7)
+ | otherwise = ("0", x:xs)
+        where pair5 = ifFirstZero (xs)
+              pair6 = findHexDigit (xs)
+              pair7 = findBinaryDigit (xs)
 
--- Lex a Preλ expression into a list of tokens
--- Calls `error` if there is a lexical error (something that
--- doesn't lex)
-lexPreL :: String -> [Token]
-lexPreL input = lexNoPrefix(findToken input)
 
-litDigit :: String -> (String, String)
-litDigit "" = ("","")
-litDigit (c:cs)
-  |isDigit c = (c : fst pair, snd pair)
-  |otherwise = ("", c:cs)
-    where pair = litDigit cs
+--it simply finds a hexdigit before allowing underscores
+findHexDigit :: String -> (String, String) 
+findHexDigit "" = ("", "")
+findHexDigit (x:xs) 
+ | isHexDigit x = findUnderscoreHex(x:xs)
+ | otherwise = ("", x:xs)
 
-lex1 :: Char -> String -> (Token, String)
-lex1 c (x:xs)
-  |isAlpha c = checkStatements (c:x:xs)
-  |isDigit c = (LiteralT (IntegerV (read (fst (litDigit (c:x:xs))))), snd(litDigit (c:x:xs)))
-  |( c == '+' || c == '-'|| c == '=' || c == '>' || c == '<' || c ==  '\\' || c == '.' || c == '@' || c == '/' ) = checkOpndKey (c:x:xs)
-  |otherwise = error "no token"
+--allows underscores as part of the token including L/l
+findUnderscoreHex :: String -> (String, String) 
+findUnderscoreHex "" = ("", "")
+findUnderscoreHex (x:xs) 
+ |(isHexDigit x || x == '_') = (x : fst pair1, snd pair1)
+ |((x == 'L'|| x == 'l') && xs == "") = (x:fst pair1, snd pair1)
+ | otherwise = ("", x:xs) 
+       where pair1 = findUnderscoreHex(xs)
 
-lex1 c ""
- |isAlpha c = (VarT [c],"")
- |isDigit c = (LiteralT (IntegerV (read [c] :: Integer) ), "")
- | c == '+' =  (OpT Plus, "")
- | c == '-' = (OpT Minus, "")
- | c == '*' = (OpT Times,"")
- | c == '=' = (OpT Equals, "")
- | c == '\\'= (LambdaT, "")
- | c == '.'= (DotT, "")
- | otherwise = (AppT, "")
+--finds a bit before allowing underscores
+findBinaryDigit :: String -> (String, String)
+findBinaryDigit "" = ("", "")
+findBinaryDigit (x:xs) 
+ |( x == '0' || x =='1') = findUnderscoreBin(x : xs)
+ | otherwise = ("", x:xs)
 
-checkOpndKey :: String -> (Token, String)
-checkOpndKey(c:cx)
-  |(length cx >= 1 && ( c == '/' && (head cx) == '=')) = (OpT NotEquals, tail cx)
-  |(length cx >= 1 && ( c == '<' && (head cx) == '=')) = (OpT LessThanEquals, tail cx)
-  |(length cx >= 1 && ( c == '>' && (head cx) == '=')) = (OpT GreaterThanEquals, tail cx)
-  |c == '+'  = (OpT Plus, cx)
-  |c == '-'= (OpT Minus , cx)
-  |c == '=' = (OpT Equals, cx)
-  |c == '>' = (OpT GreaterThan, cx)
-  |c == '<' = (OpT LessThan, cx)
-  |c == '/' = (OpT Divides, cx)
-  |c == '\\' = (LambdaT, cx)
-  |c == '.' = (DotT, cx)
-  |c == '@' = (AppT, cx)
-  |otherwise = error "token error"
+-- allows underscores for Bin
+findUnderscoreBin :: String -> (String, String)
+findUnderscoreBin "" = ("", "")
+findUnderscoreBin (x:xs) 
+ | (x == '0' || x == '1'|| x == '_' ) = (x : fst pair2, snd pair2) 
+ | ((x == 'L'|| x == 'l') && xs == "") = (x:fst pair2, snd pair2)
+ | otherwise = ("", x:xs)
+       where pair2 = findUnderscoreBin(xs)
 
-checkStatements :: String -> (Token, String)
-checkStatements (x:xs)
- | (((length (x:xs) == 5) || ((length (x:xs) > 5) && not (isAlpha (head (drop 5 (x:xs) ) ) ) ) ) && ("false" == take 5 (x:xs))) = ((LiteralT (BoolV False)), drop 5 (x:xs))
- | (((length (x:xs) == 4) || ((length (x:xs) > 4) && not (isAlpha (head (drop 4 (x:xs) ) ) ) ) ) && ("true" == take 4 (x:xs))) = ((LiteralT (BoolV True)), drop 4 (x:xs))
- | (((length (x:xs) == 4) || ((length (x:xs) > 4) && not (isAlpha (head (drop 4 (x:xs) ) ) ) ) ) && ("then" == take 4 (x:xs))) = (ThenT, drop 4 (x:xs))
- | (((length (x:xs) == 4) || ((length (x:xs) > 4) && not (isAlpha (head (drop 4 (x:xs) ) ) ) ) ) && ("else" == take 4 (x:xs))) = (ElseT, drop 4 (x:xs))
- | (((length (x:xs) == 3) || ((length (x:xs) > 3) && not (isAlpha (head (drop 3 (x:xs) ) ) ) ) ) && ("not" == take 3 (x:xs))) = (NotT, drop 3 (x:xs))
- | (((length (x:xs) == 2) || ((length (x:xs) > 2) && not (isAlpha (head (drop 2 (x:xs) ) ) ) ) ) && ("if" == take 2 (x:xs))) = (IfT, drop 2 (x:xs))
- | otherwise = isIdentifierFinal (x:xs)
+-- I tried making a operator function but it was not working and I have it commented below:
+{-}
+findOperator :: String -> (String, String)
+findOperator "" = ("", "")
+findOperator(x:xs)
+  | ([x] `elem` operators) = ((x : fst pair8), snd pair8)
+  | otherwise = ("", x:xs)
+findOperator(x:y:xs)
+  | ([x:y] `elem` operators) = ((x:y : fst pair9), snd pair9)
+  | otherwise = ("", x:y:xs)
+findOperator(x:y:w:xs)
+  | ([x:y:w] `elem` operators) = ((x:y:w : fst pair10), snd pair10)
+  | otherwise = ("", x:y:w:xs)
+findOperator(x:y:w:z:xs)
+  | ([x:y:w:z] `elem` operators)= ((x:y:w:z : fst pair11), snd pair11)
+  | otherwise = ("", x:y:w:z:xs)
+ where operators = ["=", ">", "<", "!", "~", "?", ":", "->", "==", ">=", "<=", "!=", "&&", "||", "++", "--", "+", "-", "*", "/", "&", "|", "^", "%", "<<", ">>", ">>>", "+=", "-=","*=", "/=", "&=", "|=", "^=", "%=", "<<=", ">>=", ">>>="]
+       pair8 = findOperator (y:w:z:xs)
+       pair9 = findOperator (w:z:xs)
+       pair10 = findOperator (z:xs)
+       pair11 = findOperator (xs)
+  -}     
+-- alternative to operators and separators function
+findOpandSep :: String -> (String, String)
+findOpandSep "" = ("", "")
+findOpandSep(x:xs)
+   |isSymbol(x) = (x: (fst pair12) , snd pair12)
+   |otherwise = ("", x:xs)
+      where pair12 = findOpandSep xs
 
-isIdentifier :: String -> (String, String)
-isIdentifier "" = ("", "")
-isIdentifier (x:xs)
-  |isAlpha x = ((x: fst pair), snd pair)
-  |otherwise = ("", x:xs)
-      where pair = isIdentifier xs
-
-isIdentifierFinal :: String -> (Token, String)
-isIdentifierFinal x = ((VarT (fst(isIdentifier x))), snd(isIdentifier x))
-
-hasRightBracket :: String -> Bool
-hasRightBracket "" = False
-hasRightBracket x
- |head x == '}' = True
- |otherwise = hasRightBracket (tail x)
-
+-- removes whitespaces and comments from the string
 findToken :: String -> String
 findToken "" = ""
-findToken (z:xs)
- | isSpace z = findToken (xs)
- | ( z == '(' || z == ')') = findToken (xs)
- | z == '{' && hasRightBracket(xs) =  findComment xs
- | otherwise = z:xs
+findToken (z:y:xs) 
+ | isSpace z = findToken (y:xs)
+ | (z == '/' && y == '/') =  findSingleComment xs
+ | (z == '/' && y == '*') = findMultiComment xs
+ | otherwise = z:y:xs
+findToken (x:xs) = (x:xs)
 
 --this function is called by findToken if only there is // and this functin calls itself until it finds the end of the comment
 -- where it recurs back to findToken to check for any whitespaces after it
-findComment :: String -> String
-findComment "" = ""
-findComment (z:xs)
- | (z == '}' ) = findToken xs
- | otherwise = findComment (xs)
+findMultiComment :: String -> String
+findMultiComment "" = ""
+findMultiComment (z:y:xs)
+ | (z == '*' && y == '/' ) = findToken xs
+ | otherwise = findMultiComment (y:xs)
+--this function is called by findToken if only there is /* and this functin calls itself until it finds the end of the comment
+-- where it recurs back to findToken to check for any whitespaces after it
+findSingleComment :: String -> String 
+findSingleComment "" = ""
+findSingleComment (x:xs)
+ | x == '\n' = findToken xs
+ | otherwise = findSingleComment xs
 
-lexNoPrefix :: String -> [Token]
-lexNoPrefix [] = []
-lexNoPrefix (c:cs) = token : lexPreL rest
-  where
-   (token, rest) = lex1 c cs
+
+
+
+
+
+
+
